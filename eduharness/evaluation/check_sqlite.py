@@ -14,7 +14,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--database",
-        default=r"D:\agent_dev\MiniCode-Python\eduharness.db",
+        default="./eduharness.db",
+        help="SQLite 数据库路径（默认仓库根目录下的 ./eduharness.db）",
     )
     args = parser.parse_args()
 
