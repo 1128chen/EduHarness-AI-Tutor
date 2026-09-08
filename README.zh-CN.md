@@ -130,6 +130,17 @@ python -m pytest -q                          # 引擎全量用例（需 Python 3
 - **演示数据为合成轨迹**：`demo.*` 学员的作答用于演示"到期复习 / 驾驶舱 / 改判联动"，接入真实班级只需替换课程 seed。
 - **题目为自写转述**：LeetCode 题目仅以题号做课程编排引用，题面/题解为自写内容，不复制官方文本，规避版权问题。
 
+## Acknowledgements / 致谢
+
+本项目基于 **MiniCode 系列 Agent 引擎** 构建（MIT License）：
+
+- [LiuMengxuan04/MiniCode](https://github.com/LiuMengxuan04/MiniCode) — 主线 Agent 运行时
+- [QUSETIONS/MiniCode-Python](https://github.com/QUSETIONS/MiniCode-Python) — Python 引擎底座（会话 / 记忆 / MCP / 审批）
+
+引擎部分保留上游 MIT 版权声明，EduHarness 上的教育领域代码（题库 / 知识库 / 掌握度引擎 / 艾宾浩斯调度 / 教师驾驶舱 / LeetCode 训练营）为本项目新增。
+
+运行时依赖：FastAPI、SQLAlchemy(async)、sse-starlette、React、Vite、MCP。
+
 ## License
 
-本项目为演示 / 教学用途开源，License 待定。
+本项目采用 [MIT License](./LICENSE)。引擎部分版权归上游 MiniCode 作者（Liu Mengxuan），EduHarness 新增部分版权归 Jialing Chen。

@@ -107,6 +107,17 @@ python -m pytest -q                      # full engine suite (Python 3.11+, dev 
 - Demo students use **synthetic attempt trajectories** to demonstrate due reviews / dashboards / re-grades.
 - LeetCode items use editorial numbers only for course organization; all stems/solutions are self-written to avoid copyright issues.
 
+## Acknowledgements
+
+Built on the **MiniCode agent engine family** (MIT License):
+
+- [LiuMengxuan04/MiniCode](https://github.com/LiuMengxuan04/MiniCode) — upstream agent runtime
+- [QUSETIONS/MiniCode-Python](https://github.com/QUSETIONS/MiniCode-Python) — Python engine base (sessions / memory / MCP / approvals)
+
+Engine portions retain the upstream MIT copyright; the education-domain code added by EduHarness (question bank / knowledge base / mastery engine / Ebbinghaus scheduler / teacher dashboard / LeetCode bootcamp) is new.
+
+Runtime dependencies: FastAPI, SQLAlchemy(async), sse-starlette, React, Vite, MCP.
+
 ## License
 
-Open-source demo/education project; license TBD.
+[MIT License](./LICENSE). Engine portions © Liu Mengxuan (upstream MiniCode); EduHarness additions © Jialing Chen.
