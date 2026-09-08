@@ -7,7 +7,7 @@
 <p align="center">
   <a href="./README.zh-CN.md">中文</a>
   ·
-  <a href="https://github.com/QUSETIONS/MiniCode-Python">Repository</a>
+  <a href="https://github.com/1128chen/EduHarness-AI-Tutor">Repository</a>
 </p>
 
 <p align="center">

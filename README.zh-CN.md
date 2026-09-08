@@ -7,7 +7,7 @@
 <p align="center">
   <a href="./README.md">English</a>
   ·
-  <a href="https://github.com/QUSETIONS/MiniCode-Python">仓库</a>
+  <a href="https://github.com/1128chen/EduHarness-AI-Tutor">仓库</a>
 </p>
 
 <p align="center">
