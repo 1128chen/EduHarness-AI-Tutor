@@ -1,323 +1,135 @@
-# MiniCode Python
+# EduHarness · 可审计 AI 助教
 
 <p align="center">
-  <strong>一个面向本地开发的轻量级 coding agent：不只是聊天壳子，而是可恢复、可回放、可检查的终端工作流。</strong>
+  <strong>用自研 Agent 运行时把「答疑 → 批改 → 复习」做成可审批、可回放、可申诉、可评测的闭环。</strong>
 </p>
 
 <p align="center">
   <a href="./README.md">English</a>
-  |
-  <a href="https://github.com/LiuMengxuan04/MiniCode">MiniCode 主仓库</a>
-  |
-  <a href="https://github.com/QUSETIONS/MiniCode-Python">Python 仓库</a>
+  ·
+  <a href="https://github.com/QUSETIONS/MiniCode-Python">仓库</a>
 </p>
 
 <p align="center">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-1000%2B%20passed-brightgreen?style=flat-square">
-  <img alt="Package" src="https://img.shields.io/badge/package-minicode--py-555?style=flat-square">
+  <img alt="Tests" src="https://img.shields.io/badge/eduharness-tests-40%20passed-brightgreen?style=flat-square">
+  <img alt="Frontend" src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white">
 </p>
 
-<p align="center">
-  <img alt="真实的 MiniCode Python 前端 Demo，突出 memory、session、rewind 和 readiness" src="./Docs/Documentation/assets/readme/minicode-frontend-hero.png" width="100%">
-</p>
+> 市面上大多数"AI 助教"只是一个会聊天的壳：会话会断、上下文会丢、批改不能申诉、教师数据无法按班级隔离、效果也无从评测。EduHarness 的不同之处在于，把教育场景里真正重要的**可解释、可回放、可申诉**做成了运行时的一等能力。
 
-<p align="center">
-  <em>这不是示意图，而是真实的 MiniCode 前端 Demo：首页直接把 memory、session、rewind 和 readiness 作为一等产品能力展示出来。</em>
-</p>
+## 它解决什么问题
 
-MiniCode Python 是 MiniCode 家族里的 Python 运行时。它面向真实的本地开发场景：agent 不只是能调模型和工具，还要能跨长会话保留状态、回看历史、撤销错误编辑，并把自己的运行状态说清楚。
+- **会话与记忆不可靠**：学生隔天回来上下文丢失、助教前后说法不一致。
+- **评阅不可申诉**：一次扣分没有证据与回放，改判后学情状态被打补丁式污染。
+- **数据无法隔离**：教师看不到"自己班级之外"的数据边界，高危动作缺乏人工审批。
+- **无标准化评测**：功能好坏靠"感觉"，模型故障与本地逻辑的分界不清。
 
-如果把 Claude Code 看成成熟的终端 agent 产品体验，那么 MiniCode Python 更像它的轻量级、本地优先版本：更强调运行时透明性、可持续会话、记忆连续性、可回退编辑，以及可验证行为。
+EduHarness 以一个**自研 Agent 运行时**为底座（会话 / 记忆 / 工具审批 / 事件总线），其上承载两门可直接使用的课程：**Python 程序设计入门** 与 **LeetCode Hot100 训练营**。
 
-上面的截图来自真实的 MiniCode 前端 Demo。它想表达的是我们最看重的四件事：memory 让上下文不断线，session 可以 inspect 和 replay，rewind 让本地编辑更安全，readiness 能告诉你运行时是不是真的 ready。
+## 三个产品面
 
-## At a Glance
-
-如果你想要的是下面这些体验，这个仓库就是给你的：
-
-- 一个更像运行时而不是聊天窗口的终端 coding agent；
-- 可 inspect、可 replay、可 resume、可总结的持久会话；
-- 能保护工作上下文、并在需要时回注项目知识的记忆系统；
-- 带 checkpoint、rewind preview 和恢复路径的安全本地编辑；
-- 对 verification、widening、provider readiness 和失败原因都有显式信号。
-
-如果只记住一句话，可以记这个：
-
-> MiniCode Python 的核心目标是本地可信度：你应该能看清它做了什么、把改动撤回来，也能理解它为什么停在这里。
-
-## Why This Repo Exists
-
-很多 coding-agent README 会先讲模型接入和功能清单。MiniCode Python 想解决的是另一类问题：
-
-> 运行时应该是可观察、可恢复、可测试的，而不只是“聪明”。
-
-这会直接改变产品优先级：
-
-| 优先级 | 在这个仓库里的含义 |
+| 入口 | 说明 |
 | --- | --- |
-| Session-first | 会话可以 inspect、replay、resume 和 summary。 |
-| Recovery-first | 文件编辑默认带 checkpoint、可 preview、可 rewind。 |
-| Runtime-first | widening、verification、compaction 和 stop reason 都是显式的。 |
-| Local-first | agent 围绕真实仓库、本地工具和终端工作流构建。 |
+| **学生对话** | 浏览器里和 agent 助教连续对话、答题；agent 只经自研 MCP 边界（题库 / 知识库）取题判分，回答必带引用、不编造 |
+| **LeetCode 训练营** | 15 章 × 45 题学习路径：章节知识点先行 → 按序刷题 → 代码提交 → 判题 + 详细题解；按**艾宾浩斯**自动生成每日「到期复习 + 当前章新题」 |
+| **教师工作台** | 班级驾驶舱（知识点掌握度聚合、高风险学生、弱项置顶）、一键 CSV、**申诉复核**（改判自动联动掌握度重算） |
 
-## Why MiniCode Python
+## 核心机制（面试可深挖）
 
-| 维度 | MiniCode Python 的侧重点 |
-| --- | --- |
-| Durable sessions | 可以用本地命令 inspect、replay、resume 和 summary 当前或已保存会话。 |
-| Memory as a first-class system | 保护活跃任务上下文、回注项目知识、在压缩时保持记忆感知、并持续沉淀有价值反思。 |
-| Safe recovery | 自动 checkpoint、rewind preview、rewind safety group，以及 saved-session rewind。 |
-| Runtime control | `single` / `single-deep` profile、phase-aware 执行、widening、verification gate 和结构化 stop reason。 |
-| Observable behavior | runtime timeline、readiness report、provider 诊断、transcript summary 和 benchmark artifact。 |
-| Local product surface | CLI/TUI 命令已经包括 `/session`、`/session-replay`、`/memory`、`/checkpoints`、`/rewind`、`/readiness`。 |
-| Verifiable implementation | 根包由活跃测试套件兜底，不是“文档先行”的空壳。 |
+- **会话可回放、断线可续传**：会话 / 作答 / Agent 事件全量落库，SSE 与 WebSocket 双通道按序列续传。
+- **掌握度 = 可重放记忆**：每次作答沉淀一条带权证据；掌握度由纯函数**幂等派生重算**（增量==重算，单测守护），教师改判后不补丁、直接全量重放。
+- **可申诉评阅**：每次作答保留不可变证据快照（题干 / 作答 / 引用知识点 / 得分），学生可申诉，教师复核改判后系统按新证据重算该生知识点掌握度。
+- **艾宾浩斯复习调度**：对已掌握题目按 `1/2/4/7/15/30` 天生成到期日，每天先派复习、再派当前章新题，完成即出队。
+- **多角色与审批**：教师 / 学生分角色，自研 HMAC-SHA256 Bearer Token + pbkdf2 口令；教师数据按归属隔离、越权统一 404；高危工具动作进入人工审批（超时自动拒绝），全程留痕。
+- **安全边界**：路径沙箱防逃逸、MCP 命令白名单、**代码判题不执行学生代码**。
 
-## What You Can Do Today
-
-以当前仓库状态，你已经可以：
-
-- 用 `minicode-py` 跑交互式终端 agent；
-- 用 `minicode-headless` 跑单次命令；
-- 用 `minicode-readiness` 跑 provider/runtime readiness 门禁；
-- 用 `/session` 查看当前会话快照；
-- 用 `/sessions` 浏览当前工作区历史会话；
-- 用 `/session-replay` 回放会话；
-- 用 `/memory` 查看记忆层状态；
-- 用 `/checkpoints` 查看 checkpoint 历史；
-- 用 `/rewind-preview` 和 `/rewind` 预演或执行回退；
-- 用 `/readiness` 检查 provider 和 fallback 是否就绪。
-
-## 3-Minute Demo
-
-### 0. 你需要什么
-
-- Python 3.11+
-- Windows、macOS 或 Linux 上的本地终端
-- 如果要真实跑模型，需要可用的 provider/model 凭据
-
-### 1. 安装并启动
-
-```bash
-git clone https://github.com/QUSETIONS/MiniCode-Python.git
-cd MiniCode-Python
-python -m pip install -e .[dev]
-minicode-py
-```
-
-### 2. 让它做一个真实仓库任务
+## 架构
 
 ```text
-Explain this repository and tell me which commands matter most for day-to-day use.
+React (学生对话 / LeetCode / 教师工作台)
+        │  37× REST + WebSocket
+        ▼
+FastAPI 应用层（api / application / domain / infrastructure）
+        │
+        ├── LeetCodeService  课程推进 + 艾宾浩斯每日计划
+        ├── LearningService  作答 → 证据 → 掌握度 / 申诉复核
+        └── RuntimeManager   每轮对话 = 一次 Agent turn（事件总线 + 审批桥）
+                │  经自研 MCP 边界
+                ▼
+   自研 Agent 运行时（MiniCode 引擎）：分层记忆 / 会话回放 / 工具审批
+                题库 question_bank · 知识库 knowledge_base
 ```
 
-这里你应该看到标准的 MiniCode 工作流：先读仓库、解释发现，再让你 inspect、replay 或继续会话。
+## 快速开始
 
-### 3. 检查运行时在做什么
-
-```text
-/session
-/memory
-/readiness
-```
-
-### 4. 需要时回放或恢复
-
-```text
-/session-replay
-/checkpoints
-/rewind-preview
-```
-
-### 5. 跑一次 headless 单轮模式
+环境：Python 3.11+、Node 18+。
 
 ```bash
-minicode-headless "Explain what this repo does."
+# 1) 后端依赖
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install fastapi "uvicorn[standard]" sse-starlette pydantic-settings \
+            "sqlalchemy[asyncio]" aiosqlite pytest pytest-asyncio httpx
+
+# 2) 灌入两门演示课程（幂等，可重复执行；默认写 ./eduharness.db）
+python -m eduharness.scripts.seed_python_course
+python -m eduharness.scripts.seed_leetcode_course
+
+# 3) 启动 API（http://127.0.0.1:8000）
+python -m eduharness.api.app
+
+# 4) 启动前端（http://localhost:5173，/api 已代理到 8000）
+cd frontend && npm install && npm run dev
 ```
 
-### 6. 跑 readiness 门禁
+**演示账号**
+
+- 教师工作台：`demo` / `demo1234`（进入后可见两门课与驾驶舱）
+- 学生：Python 课 `demo.stu01 / demo.stu02 / demo.stu03`；LeetCode 课 `demo.lc01 / demo.lc02 / demo.lc03`
+
+**配置**：环境变量以 `EDUHARNESS_` 为前缀，例如 `EDUHARNESS_DATABASE_URL` 切换数据库（SQLite 或 PostgreSQL 均支持，仅换连接串）、`EDUHARNESS_AUTH_SECRET` 覆盖默认签名密钥。密钥一律走本地 `.env`（已被 git 忽略），不要提交。
+
+## API 一览
+
+| 分组 | 端点（前缀 `/api/v1`） |
+| --- | --- |
+| 健康 | `GET /health/live`、`GET /health/ready` |
+| 鉴权 | `POST /auth/teacher/login` |
+| 教师 | `POST/GET /teachers/courses`、`POST/GET /courses/{id}/students` |
+| 驾驶舱 | `GET /courses/{id}/cockpit`、`GET /courses/{id}/cockpit.csv` |
+| 会话对话 | `POST/GET /sessions`、`POST /sessions/{id}/turns`、`GET /turns/{id}/events`(SSE)、`POST /approvals/{id}` |
+| 作答 | `POST /students/{id}/attempts`、`POST /students/{id}/attempts/auto`、`POST /students/{id}/attempts/coding`、`GET /questions` |
+| 申诉 | `POST /students/{id}/attempts/{aid}/appeal`、`GET /appeals/pending`、`POST /appeals/{id}/resolve` |
+| LeetCode | `GET /leetcode/curriculum`、`POST /students/{id}/leetcode/today`、`GET/…/plan`、`POST /leetcode/tasks/{id}/done` |
+
+## 测试与量化
 
 ```bash
-minicode-readiness --json --fail-on blocked
-minicode-readiness --examples-out .temp/readiness-fallback-examples.json --fail-on blocked
-minicode-readiness --doctor-out .temp/readiness-doctor.md --fail-on blocked
-minicode-readiness --repair-plan-out .temp/readiness-repair-plan.json --fail-on blocked
-minicode-readiness --patch-preview-out .temp/readiness-fallback-patch-preview.json --fail-on blocked
-minicode-readiness --bundle-out .temp/readiness-bundle --fail-on blocked
-python -m minicode.release_readiness --check-readiness-bundle .temp/readiness-bundle
-python -m minicode.release_readiness --write-artifact-manifest .temp/readiness-artifact-manifest.json --artifact fallback_examples_json=.temp/readiness-fallback-examples.json --artifact doctor_markdown=.temp/readiness-doctor.md --artifact repair_plan_json=.temp/readiness-repair-plan.json --artifact patch_preview_json=.temp/readiness-fallback-patch-preview.json
-python -m minicode.release_readiness --check-artifact-manifest .temp/readiness-artifact-manifest.json
-python -m minicode.release_readiness --check-fallback-patch-preview .temp/readiness-fallback-patch-preview.json
-python -m minicode.release_readiness --check-fallback-simulation .temp/readiness-bundle/readiness-fallback-simulations.json
-python -m minicode.release_readiness --check-fallback-switch-smoke
-python benchmarks/release_readiness.py
-python -m minicode.release_readiness --check-fallback-evidence benchmarks/release_readiness_results.json
-python -m minicode.release_readiness --check-release-report benchmarks/release_readiness_results.json
-python -m minicode.release_readiness --check-release-markdown benchmarks/release_readiness_results.md --release-json benchmarks/release_readiness_results.json
+python -m pytest tests/eduharness -q        # 40 项分层用例（本地可全绿）
+python -m pytest -q                          # 引擎全量用例（需 Python 3.11+ 与 dev 依赖）
 ```
 
-CI 环境建议用 `--fail-on blocked`：provider warning 会被报告，但不会误伤本地产品门禁。发布候选如果要求 provider 和 fallback 都 ready，再用 `--fail-on warning`。`--examples-out` 只导出只读配置建议，不会写入凭据，也不会修改 MiniCode settings。`--doctor-out` 会额外导出一份给 CI 和 release bundle 使用的人工可读诊断报告，其中包含 primary provider、fallback coverage、configured/default fallback 和 live smoke 分离状态的 local preflight 清单。`--repair-plan-out` 会把同一修复路径导出为已脱敏 JSON，让 CI 可以审计下一步动作但不写入凭据。`--patch-preview-out` 会导出已脱敏的 settings merge patch 预览，方便先审查选定 fallback provider，再由人工合并到本地 settings。artifact manifest 命令会记录 readiness artifacts 的存在性、大小和 SHA-256，用于发现证据缺失或漂移。`--bundle-out` 会一次性写出 examples、doctor、repair plan、patch preview、离线 fallback simulations 和 manifest，是本地最低操作成本的检查入口。`--check-fallback-patch-preview` 会校验 patch preview 的 safety 字段、apply notes、merge patch 形态和脱敏状态。`--check-fallback-simulation` 会逐项校验离线模拟并拒绝任何 live provider 声明，不会调用 provider。`--check-readiness-bundle` 会把 bundle 作为一个整体校验 schema、manifest 和脱敏状态。`benchmarks/release_readiness.py` 默认只刷新报告；如果发布候选必须在 live-provider 风险上失败，使用 `python benchmarks/release_readiness.py --fail-on at-risk`。它也会校验 headless provider trace，确保 live-smoke 失败仍保留机器可读的 readiness 快照和 repair plan。`--check-fallback-evidence` 会校验 provider 风险是否配有 fallback 覆盖或可审计的 fallback 修复路径。`--check-release-report` 会校验完整 release JSON 的 schema 和证据链接；只要诊断证据完整，provider `at-risk` 不会被误判为本地门禁失败。`--check-release-markdown` 会校验人工可读 Markdown 报告是否覆盖 JSON 中的状态、smoke、provider、fallback 和 artifact 证据。
+- 自建三条件记忆评测（14 中断任务 × 28 目标）：恢复率 **100%（28/28）**，弱会话 **29%**、无记忆 **0%**。
+- 掌握度"增量==重算"、艾宾浩斯到期、申诉改判单调性均由用例断言守护。
+- 40 项分层用例 + 引擎 1300+ 用例跨平台 CI；结构合规门禁 0 违规。
+- 无模型凭据也能跑通全部演示与回归（判题走自评 / 离线对照，agent 对话才需要 provider）。
 
-## Typical Workflow
+## 仓库结构
 
-```mermaid
-flowchart LR
-    Start["开始一个本地任务"] --> Run["运行 minicode-py"]
-    Run --> Work["Agent 读取、编辑、测试并汇报"]
-    Work --> Inspect["用 /session、/memory 或 /readiness 检查状态"]
-    Inspect --> Replay["用 /session-replay 回放"]
-    Inspect --> Recover["如果编辑出错，用 /rewind 预演或恢复"]
-    Replay --> Continue["继续下一轮工作"]
-    Recover --> Continue
-```
-
-核心点很简单：MiniCode Python 不想把运行时藏起来。它让你看见工作过程、检查状态，并在出错时直接恢复，而不是自己手工善后。
-
-这套思路同样适用于 memory：活跃任务上下文会被保护，耐久项目知识会在需要时回注，compaction 也可以利用记忆而不是盲目丢上下文。
-
-## Everyday Commands
-
-如果一开始只记六个命令，先记这几个：`/session`、`/sessions`、`/session-replay`、`/memory`、`/rewind-preview`、`/readiness`。
-
-| 命令 | 作用 |
+| 路径 | 说明 |
 | --- | --- |
-| `/session` | 查看当前 live session 快照。 |
-| `/sessions` | 列出当前 workspace 的已保存会话。 |
-| `/session-replay` | 回放当前或已保存会话，包括 transcript 和 runtime 上下文。 |
-| `/memory` | 查看当前 workspace 的记忆系统状态。 |
-| `/checkpoints` | 查看当前或已保存会话的 checkpoint 历史。 |
-| `/rewind-preview` | 在真正改文件前，先看 rewind 会恢复什么。 |
-| `/rewind` | 按最新 edit group、步数或 checkpoint id 执行回退。 |
-| `/readiness` | 检查 runtime/provider readiness、fallback coverage 和产品面状态。 |
+| `eduharness/` | 主应用：FastAPI（api）/ 服务（application）/ 领域（domain）/ 存储（infrastructure） |
+| `eduharness/scripts/` | `seed_python_course.py`、`seed_leetcode_course.py` 等幂等灌数脚本 |
+| `minicode/` | 自研 Agent 引擎底座（会话 / 记忆 / MCP / 审批） |
+| `frontend/` | React 19 前端（学生对话、LeetCode、教师工作台三个视图） |
+| `tests/eduharness/` | 分层测试（领域纯函数 / 仓储 / HTTP 端到端） |
 
-## Current Status
+## 已知边界（诚实说明）
 
-这个仓库已经过了纯 prototype 阶段。它现在更像一个可用的本地产品，但仍在继续朝“更成熟的轻量级 Claude Code 体验”收紧。
+- **判题默认走"自评/离线对照"**：学生对照系统给出的详细题解自查 AC/错误；字段与接口已保留 `reviewed_by=agent/teacher` 通道，接入真实 LLM 或教练复核只需替换判题来源，服务端始终不执行学生代码。
+- **演示数据为合成轨迹**：`demo.*` 学员的作答用于演示"到期复习 / 驾驶舱 / 改判联动"，接入真实班级只需替换课程 seed。
+- **题目为自写转述**：LeetCode 题目仅以题号做课程编排引用，题面/题解为自写内容，不复制官方文本，规避版权问题。
 
-当前生效的主包是根目录 `minicode/`，由 `pyproject.toml` 里的 `minicode-py` 配置驱动。
+## License
 
-最近一次跨平台 CI 验证结果：
-
-```text
-1311 passed, 2 skipped
-```
-
-验证命令：
-
-```bash
-python -m compileall -q minicode tests benchmarks Main Package
-python -m minicode.structure_check --root . --hotspots 5 --max-dependency-upstream 4 --check-material-inventory --report .temp/structure-compliance.json
-python -m minicode.release_readiness --check-structure-compliance-artifact .temp/structure-compliance.json
-python -m minicode.readiness --json --fail-on blocked
-python -m minicode.readiness --examples-out .temp/readiness-fallback-examples.json --fail-on blocked
-python -m minicode.readiness --doctor-out .temp/readiness-doctor.md --fail-on blocked
-python -m minicode.readiness --repair-plan-out .temp/readiness-repair-plan.json --fail-on blocked
-python -m minicode.readiness --patch-preview-out .temp/readiness-fallback-patch-preview.json --fail-on blocked
-python -m minicode.readiness --bundle-out .temp/readiness-bundle --fail-on blocked
-python -m minicode.release_readiness --check-readiness-bundle .temp/readiness-bundle
-python -m minicode.release_readiness --write-artifact-manifest .temp/readiness-artifact-manifest.json --artifact fallback_examples_json=.temp/readiness-fallback-examples.json --artifact doctor_markdown=.temp/readiness-doctor.md --artifact repair_plan_json=.temp/readiness-repair-plan.json --artifact patch_preview_json=.temp/readiness-fallback-patch-preview.json
-python -m minicode.release_readiness --check-artifact-manifest .temp/readiness-artifact-manifest.json
-python -m minicode.release_readiness --check-fallback-patch-preview .temp/readiness-fallback-patch-preview.json
-python -m minicode.release_readiness --check-fallback-simulation .temp/readiness-bundle/readiness-fallback-simulations.json
-python -m minicode.release_readiness --check-fallback-switch-smoke
-python benchmarks/release_readiness.py
-python -m minicode.release_readiness --check-fallback-evidence benchmarks/release_readiness_results.json
-python -m minicode.release_readiness --check-release-report benchmarks/release_readiness_results.json
-python -m minicode.release_readiness --check-release-markdown benchmarks/release_readiness_results.md --release-json benchmarks/release_readiness_results.json
-python -m pytest -q --import-mode=importlib
-```
-
-实话实说，当前状态是：
-
-- runtime、session、replay、checkpoint、rewind、readiness 和结构合规门禁这些产品面已经比较稳；
-- memory 不是外挂：working memory、project memory、memory injection 和 memory-aware compaction 已经进了主运行路径；
-- provider 和 fallback 诊断已经包含 local preflight 清单、结构化 live-smoke 失败上下文和已校验的 headless trace artifact；
-- 真实 provider 是否可用，仍然取决于你本地的凭据和通道配置；
-- 这个项目今天已经能用，但还在继续往更完整的轻量级 Claude Code 体验走。
-
-真实 provider readiness 仍然取决于本地凭据和通道可用性，所以默认 CI readiness 门禁只在 runtime blocked 时失败。
-
-## Architecture
-
-```mermaid
-flowchart LR
-    User["用户任务"] --> Loop["agent_loop.py"]
-    Loop --> Kernel["turn_kernel.py<br/>phase policy, widening,<br/>verification gate"]
-    Loop --> Memory["Memory stack<br/>working_memory.py,<br/>memory.py, memory_pipeline.py"]
-    Kernel --> Tools["本地工具<br/>files, search, edit, shell"]
-    Tools --> Loop
-    Memory --> Loop
-
-    Loop --> Signals["Signals<br/>context, cost, errors,<br/>progress, provider state"]
-    Signals --> Orchestrator["CyberneticOrchestrator"]
-    Orchestrator --> Actions["Runtime actions<br/>compact, checkpoint, rewind,<br/>adjust budget, recover, reflect"]
-    Actions --> Loop
-```
-
-重点不是这张图本身，而是运行时状态在这里是显式对象：
-
-- loop 可以 widen，而不是静默卡死；
-- verification 可以拦住过早的 “done”；
-- memory 可以保护任务关键上下文，并在需要时回注项目知识，而不是只依赖当前 chat window；
-- session 状态可以跨进程存在；
-- rewind 可以撤销本地编辑，而不是让你手工收拾残局；
-- readiness 可以告诉你失败到底是本地逻辑还是 provider availability。
-
-## Repository Guide
-
-| 路径 | 作用 |
-| --- | --- |
-| `minicode/` | 安装和测试使用的规范 Python 包。 |
-| `tests/` | 活跃测试套件。 |
-| `benchmarks/` | runtime profile、release readiness runner 和生成报告。 |
-| `Docs/Documentation/` | 架构说明、优化记录和产品化报告。 |
-| `openspec/` | spec、归档变更记录，以及 build/verify 规划产物。 |
-| `.mini-code-memory/` | runtime 创建的 workspace 级持久记忆状态。 |
-
-## Core Modules
-
-| 模块 | 作用 |
-| --- | --- |
-| `minicode/agent_loop.py` | 主 model/tool loop、runtime event flow 和产品集成。 |
-| `minicode/turn_kernel.py` | step policy、phase transition、widening 和 verification gate。 |
-| `minicode/session.py` | durable session、inspect/replay 视图、checkpoint 和 rewind helper。 |
-| `minicode/cli_commands.py` | `/session`、`/replay`、`/rewind`、`/readiness` 这类本地产品命令。 |
-| `minicode/memory.py` | 长期项目记忆管理和检索入口。 |
-| `minicode/working_memory.py` | 在 compaction 压力下仍会保留的 working memory 条目。 |
-| `minicode/memory_pipeline.py` | memory retrieval、injection、reflection writeback 和优化闭环。 |
-| `minicode/product_surfaces.py` | readiness、hooks、instructions、delegation、extensions 等用户可见摘要。 |
-| `minicode/readiness.py` | 独立 readiness CLI，用于本地检查和 CI 门禁。 |
-| `minicode/release_readiness.py` | 面向 release 的 runtime smoke 与 provider readiness 检查。 |
-| `minicode/model_switcher.py` | 有界 fallback 和 failover 选择逻辑。 |
-| `minicode/runtime_profiles.py` | `single`、`single-deep` 等 runtime profile。 |
-| `minicode/cybernetic_orchestrator.py` | runtime control 生命周期总控。 |
-
-## MiniCode Family
-
-| 版本 | 仓库 | 侧重点 |
-| --- | --- | --- |
-| TypeScript | [LiuMengxuan04/MiniCode](https://github.com/LiuMengxuan04/MiniCode) | 主线终端 agent、TUI、MCP、skills、session 和 context control。 |
-| Python | [QUSETIONS/MiniCode-Python](https://github.com/QUSETIONS/MiniCode-Python) | 本地优先的 Python runtime，强化了 session、rewind、readiness 和 observability。 |
-| Rust | [harkerhand/MiniCode-rs](https://github.com/harkerhand/MiniCode-rs/tree/master) | 偏系统侧实现与实验。 |
-| Java | [hobbescalvin414-tech/minicode4j](https://github.com/hobbescalvin414-tech/minicode4j/tree/feat/default-ts-ui) | Java 实现，沿着 TypeScript 风格 UI 方向演进。 |
-
-## Documentation
-
-如果你想继续看更深的实现与产品化记录，可以从这里开始：
-
-- [English README](./README.md)
-- [Optimization Summary](./Docs/Documentation/OPTIMIZATION_SUMMARY.md)
-- [Memory Theory](./Docs/Documentation/memory_theory.md)
-- [Minicode-lite Productization Design](./Docs/Documentation/superpowers/specs/2026-06-05-minicode-lite-productization-design.md)
-- [Minicode-lite Build Plan](./Docs/Documentation/superpowers/plans/2026-06-05-minicode-lite-productization-build.md)
-- [Minicode-lite Verify Report](./Docs/Documentation/superpowers/reports/2026-06-05-minicode-lite-productization-verify.md)
-- [Main MiniCode Repository](https://github.com/LiuMengxuan04/MiniCode)
-
-## Design Principles
-
-- 让运行时保持可检查。
-- 把 memory 当成可控的 runtime 子系统，而不是事后补丁。
-- 用可测量信号替代“prompt 玄学”。
-- 把恢复能力做成产品特性，而不是手工清理步骤。
-- 把 verification 视为执行路径的一部分，而不只是汇报。
-- 让文档描述已实现行为，而不是未来愿景。
+本项目为演示 / 教学用途开源，License 待定。

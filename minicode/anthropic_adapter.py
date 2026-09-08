@@ -12,7 +12,7 @@ from minicode.api_retry import (
     calculate_backoff,
 )
 from minicode.state import add_cost, record_api_error, update_context_usage
-from minicode.types import AgentStep, StepDiagnostics
+from minicode.edu_types import AgentStep, StepDiagnostics
 
 if TYPE_CHECKING:
     from minicode.state import Store, AppState

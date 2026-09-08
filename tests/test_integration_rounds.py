@@ -26,7 +26,7 @@ from minicode.prompt import build_system_prompt_bundle
 from minicode.session import create_new_session, load_session, save_session
 from minicode.tools import create_default_tool_registry
 from minicode.tooling import ToolContext
-from minicode.types import AgentStep, ModelAdapter, ChatMessage
+from minicode.edu_types import AgentStep, ModelAdapter, ChatMessage
 
 
 # ---------------------------------------------------------------------------

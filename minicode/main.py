@@ -249,14 +249,14 @@ def _handle_preview_rewind_request(
     return 0
 
 def main() -> None:
-    _configure_stdio_for_unicode()
+    _configure_stdio_for_unicode()##统一终端输入输出编码
 
     parser = argparse.ArgumentParser(
         description="MiniCode Python - A lightweight terminal coding assistant",
         add_help=True,
-    )
+    )##创建命令行参数解析工具，用来识别你在终端输入启动程序时附带的指令，例如 minicode --list-sessions。
     parser.add_argument(
-        "--resume",
+        "--resume",##恢复历史聊天会话
         nargs="?",
         const="latest",
         default=None,
@@ -274,7 +274,7 @@ def main() -> None:
         help="List saved sessions for the current workspace and exit",
     )
     parser.add_argument(
-        "--readiness",
+        "--readiness",##检测环境完整性
         action="store_true",
         help="Print provider/runtime readiness and exit",
     )
@@ -381,13 +381,13 @@ def main() -> None:
         structured=structured_logging_requested(cli_flag=args.structured_logs),
     )
 
-    # Run config validation if requested
+    # Run config validation if requested##校验配置文件用户输入 --validate-config 进入该分支
     if args.validate_config:
         from minicode.config import format_config_diagnostic
         print(format_config_diagnostic())
         return
     
-    # Run installer if requested
+    # Run installer if requested##启动安装向导，输入 --install 执行安装流程，执行完成直接退出程序
     if args.install:
         from minicode.install import main as install_main
         install_main()
@@ -439,7 +439,7 @@ def main() -> None:
         )
     
     # Filter out our custom args before passing to management commands
-    management_argv = [a for a in argv if not a.startswith("--")]
+    management_argv = [a for a in argv if not a.startswith("--")]##过滤掉所有 -- 开头的官方参数，只保留纯文本自定义指令
     if maybe_handle_management_command(cwd, management_argv):
         return
 
@@ -476,7 +476,7 @@ def main() -> None:
         runtime=runtime,
         force_mock=force_mock,
     )
-    
+    ##上下文管理器，控制对话长度，防止超出AI输入上限
     # Initialize ContextManager for context window management
     from minicode.context_manager import ContextManager
     from minicode.logging_config import get_logger

@@ -9,7 +9,7 @@ from minicode.session import AutosaveManager, SessionData
 from minicode.state import AppState, Store
 from minicode.tooling import ToolRegistry
 from minicode.tui.types import TranscriptEntry
-from minicode.types import ChatMessage, ModelAdapter
+from minicode.edu_types import ChatMessage, ModelAdapter
 
 
 @dataclass

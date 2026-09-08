@@ -1,0 +1,24 @@
+{
+  "base_url": "http://127.0.0.1:8000",
+  "request_timeout_seconds": 30,
+  "stream_timeout_seconds": 120,
+
+ "session": {
+  "path": "/api/v1/sessions",
+  "payload": {
+    "student_external_id": "agent-eval-student",
+    "student_display_name": "agent-eval-student",
+    "workspace_id": "default",
+    "title": "Agent evaluation"
+  },
+  "id_field": "id"
+},
+
+  "turn": {
+    "create_path": "/api/v1/sessions/{session_id}/turns",
+    "events_path": "/api/v1/turns/{turn_id}/events",
+    "detail_path": "/api/v1/turns/{turn_id}",
+    "payload_field": "content",
+    "id_field": "turn_id"
+  }
+}

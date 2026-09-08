@@ -23,7 +23,10 @@ PermissionDecision = Literal[
     "deny_always",
     "deny_with_feedback",
 ]
-
+# ##回调函数类型，**非常关键**
+# 当需要人工审批的时候，框架会调用这个函数，传入审批详情字典；
+# TTY 模式：函数弹出终端交互；
+# EduHarness Web 项目：这个 handler 就是`PermissionBridge`，把审批事件通过 EventBus 推送给前端 WebSocket/SSE，等待用户网页操作之后返回 decision 决策。
 PromptHandler = Callable[[dict[str, Any]], dict[str, Any]]
 
 
@@ -40,7 +43,7 @@ _normalize_path_cached = lru_cache(maxsize=_CACHE_MAX_SIZE)(
     lambda p: str(Path(p).resolve())
 )
 
-
+##路径标准化
 def _normalize_path(target_path: str) -> str:
     """Normalize a path with caching. Resolves symlinks and normalizes separators.
     
@@ -54,7 +57,7 @@ def _normalize_path(target_path: str) -> str:
 # This avoids calling _is_within_directory for the trivial case.
 _is_win = sys.platform == "win32"
 
-
+##判断target是否在root目录内部
 def _is_within_directory(root: str, target: str) -> bool:
     """Check if target is within root directory.
     
@@ -156,7 +159,7 @@ def _classify_dangerous_command(command: str, args: list[str]) -> str | None:
 
     return None
 
-
+##读取磁盘的权限配置文件，如果文件损坏、json 解析失败，捕获异常，返回空字典，同时抛出 warning，不会直接崩溃程序。
 def _read_permission_store() -> dict[str, Any]:
     if not MINI_CODE_PERMISSIONS_PATH.exists():
         return {}

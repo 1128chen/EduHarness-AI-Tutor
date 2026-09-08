@@ -2,7 +2,7 @@ from minicode.agent_loop import run_agent_turn
 from minicode.model_switcher import ModelSwitcher
 from minicode.state import create_app_store
 from minicode.tooling import ToolDefinition, ToolRegistry, ToolResult
-from minicode.types import (
+from minicode.edu_types import (
     AgentStep,
     ChatMessage,
     ModelAdapter,

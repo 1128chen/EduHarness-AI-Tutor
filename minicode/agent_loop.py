@@ -6,7 +6,7 @@ import re
 import time
 from pathlib import Path
 from typing import Any, Callable
-
+# 全局底层配置、日志、模型、权限、全局状态
 from minicode.config import describe_fallback_guidance, describe_provider_channel
 from minicode.context_manager import ContextManager, estimate_message_tokens
 from minicode.logging_config import get_logger
@@ -14,22 +14,24 @@ from minicode.model_registry import detect_provider
 from minicode.permissions import PermissionManager
 from minicode.state import Store, AppState, increment_tool_calls, set_busy, set_idle
 from minicode.tooling import ToolContext, ToolRegistry, ToolResult
-from minicode.types import (
+# 基础类型定义：消息、模型、事件结构体
+from minicode.edu_types import (
     AgentStep,
     ChatMessage,
     ModelAdapter,
     RuntimeEvent,
     RuntimeEventCategory,
 )
-
+# 钩子系统：程序生命周期回调（启动/工具调用/结束）
 # Hooks integration
 from minicode.hooks import HookEvent, fire_hook_sync
-
+# 智能监控指标、错误分类、工具并发调度器
 # Intelligence integration
 from minicode.agent_metrics import AgentMetricsCollector
 from minicode.agent_intelligence import ErrorClassifier, NudgeGenerator, ToolScheduler
+# 短期工作记忆、上下文保护（不被压缩删除）
 from minicode.working_memory import get_working_memory, protect_context
-
+# 任务链路：意图识别、任务构建、任务图、流水线引擎、能力注册
 # Work chain integration
 from minicode.intent_parser import parse_intent
 from minicode.task_object import build_task, TaskObject, TaskState
@@ -40,7 +42,7 @@ from minicode.layered_context import ContextBuilder, LayeredContext
 from minicode.decision_audit import get_auditor, DecisionOutcome
 from minicode.runtime_profiles import resolve_runtime_profile
 
-# 工程控制论集成
+# 工程控制论集成：自动调参，自愈，上下文PID控制
 from minicode.cybernetic_orchestrator import CyberneticOrchestrator
 from minicode.cybernetic_supervisor import save_supervisor_report
 from minicode.feedforward_controller import FeedforwardController
@@ -56,7 +58,7 @@ from minicode.progress_controller import ProgressSignal, ProgressAction
 from minicode.memory_injector import MemoryInjectionSignal, MemoryInjector
 from minicode.model_registry import ModelSelectionSignal
 
-# 智能路由与自省 (Phase 3 导入)
+# 智能路由与自省 (Phase 3 导入):自动选大模型
 from minicode.smart_router import TaskOutcome
 
 # 上下文管理集成 (Claude Code-style + Engineering Cybernetics)
@@ -82,28 +84,28 @@ from minicode.turn_kernel import (
     finalize_work_chain_task,
     render_turn_policy_message,
 )
-
+##创建日志实例，日志标签agent_loop，方便排查循环报错
 logger = get_logger("agent_loop")
 
-# 甯搁噺锛氶伩鍏嶉噸澶嶇殑鎻愮ず鏂囨湰
+# 提示词：模型输出中断后，引导模型继续执行工具调用，不要废话
 NUDGE_CONTINUE = (
     "Continue immediately from your <progress> update with concrete tool calls, "
     "code changes, or an explicit <final> answer only if the task is complete. "
     "Prefer taking the next concrete action over explaining what you plan to do."
 )
-
+# 工具返回结果后，引导模型直接下一步操作，不要复述工具输出
 NUDGE_AFTER_TOOL_RESULT = (
     "You have received tool results. Review them briefly, then take the next "
     "concrete action: call another tool, edit code, or give an explicit <final> "
     "answer only if the task is truly complete. Do not restate what you just saw."
 )
-
+# 模型返回空白内容兜底提示
 NUDGE_AFTER_EMPTY_RESPONSE = (
     "Your last response was empty. This often happens after tool errors or when "
     "the model is uncertain. Pick the most likely next action and try it — you can "
     "adjust based on results. Call a tool, edit code, or give <final> if done."
 )
-
+# 无工具调用+空白回复，强制先读取文件
 NUDGE_AFTER_EMPTY_NO_TOOLS = (
     "Your last response was empty but you have not used any tools yet. Start by "
     "inspecting the relevant files (read_file, grep_files, list_files) to understand "
@@ -120,8 +122,9 @@ RESUME_AFTER_MAX_TOKENS = (
     "with the next concrete action — pick up where you left off."
 )
 
-
+# 标记稳定任务状态的系统消息前缀
 STABLE_TASK_STATE_MARKER = "[Stable task state]"
+# 模型服务临时故障（503/超时/过载），允许自动切换备用模型
 _MODEL_FALLBACK_ERROR_HINTS = (
     "no available channel",
     "temporarily unavailable",
@@ -138,6 +141,7 @@ _MODEL_FALLBACK_ERROR_HINTS = (
     "timed out",
     "timeout",
 )
+# 认证/参数错误，禁止切换模型，直接报错
 _MODEL_FALLBACK_BLOCK_HINTS = (
     "unauthorized",
     "forbidden",
@@ -150,11 +154,12 @@ _MODEL_FALLBACK_BLOCK_HINTS = (
     "context length",
 )
 
-
+##Upsert=update+insert
 def _upsert_stable_task_state_message(
     messages: list[ChatMessage],
     stable_text: str,
 ) -> list[ChatMessage]:
+    # 过滤掉旧的任务状态系统消息
     filtered = [
         message
         for message in messages
@@ -163,6 +168,7 @@ def _upsert_stable_task_state_message(
             and str(message.get("content", "")).startswith(STABLE_TASK_STATE_MARKER)
         )
     ]
+    # 追加最新任务状态
     filtered.append(
         {
             "role": "system",
@@ -174,6 +180,7 @@ def _upsert_stable_task_state_message(
 
 def _should_attempt_model_fallback(error_message: str) -> bool:
     normalized = error_message.lower()
+    # 认证/参数错误不降级
     if any(marker in normalized for marker in _MODEL_FALLBACK_BLOCK_HINTS):
         return False
     return any(marker in normalized for marker in _MODEL_FALLBACK_ERROR_HINTS)
@@ -197,7 +204,7 @@ def _looks_like_provider_availability_error(error_message: str) -> bool:
         )
     )
 
-
+#整合所有模型报错信息，生成用户可读错误提示，包含修复指引。
 def _summarize_model_api_failure(
     *,
     error_type: str,
@@ -236,7 +243,7 @@ def _summarize_model_api_failure(
             )
     return f"Model API error ({error_type}): {error}"
 
-
+#从报错文本提取出错模型名称，传递给model_switcher。
 def _extract_model_id_from_provider_error(error: Exception) -> str:
     message = str(error)
     match = re.search(r"model\s+([^\s]+)\s+under\s+group", message, flags=re.IGNORECASE)
@@ -244,7 +251,7 @@ def _extract_model_id_from_provider_error(error: Exception) -> str:
         return match.group(1).strip()
     return ""
 
-
+#综合 runtime 配置、模型实例、报错信息，获取当前正在使用的模型 ID。
 def _infer_active_model_id(
     model: ModelAdapter,
     runtime: dict[str, Any] | None,
@@ -264,7 +271,7 @@ def _infer_active_model_id(
 def _is_empty_assistant_response(content: str) -> bool:
     return len(content.strip()) == 0
 
-
+##从消息里找第一条非系统注入的用户消息（跳过 "Continue..."、"Your last..." 这类 nudge）作为任务描述。这是意图识别 _build_work_chain_task 的输入源。
 def _extract_task_description(messages: list[ChatMessage]) -> str:
     """Extract the original task description from messages."""
     for msg in messages:
@@ -274,13 +281,13 @@ def _extract_task_description(messages: list[ChatMessage]) -> str:
                 return content[:500]
     return "Unknown task"
 
-
+#调用意图识别，把用户需求转换成标准化 TaskObject 任务对象，绑定任务元数据（复杂度、置信度）
 def _build_work_chain_task(messages: list[ChatMessage]) -> tuple[TaskObject | None, dict]:
     """Build TaskObject from conversation messages and return it with metadata."""
     raw_input = _extract_task_description(messages)
     if raw_input == "Unknown task":
         return None, {}
-    intent = parse_intent(raw_input)
+    intent = parse_intent(raw_input)##parse_intent:意图识别
     task = build_task(intent, raw_input)
     metadata = {
         "intent_type": intent.intent_type.value,
@@ -288,7 +295,7 @@ def _build_work_chain_task(messages: list[ChatMessage]) -> tuple[TaskObject | No
         "confidence": intent.confidence,
         "entities": intent.entities,
         "complexity": intent.complexity_hint,
-    }
+    }##提取意图类型/动作类型/置信度/实体/复杂度
     logger.info(
         "Work chain: intent=%s action=%s confidence=%.2f complexity=%s",
         intent.intent_type.value, intent.action_type.value,
@@ -296,7 +303,8 @@ def _build_work_chain_task(messages: list[ChatMessage]) -> tuple[TaskObject | No
     )
     return task, metadata
 
-
+#分层构建上下文：系统提示词→项目全局记忆→会话历史→任务草稿，分层管理方便压缩。
+##分层的目的是便于按层压缩——上下文超限时，低优先级层可以先被压缩，高优先级层（系统提示词、任务草稿）保留。
 def _build_layered_context(
     messages: list[ChatMessage],
     system_prompt: str = "",
@@ -325,7 +333,7 @@ def _build_layered_context(
         builder.add_scratchpad(scratchpad)
     return context, builder
 
-
+#把所有工具（包含 MCP 工具）注册到全局能力注册表，区分文件读写 / 网络 / 命令执行权限。
 def _register_tool_capabilities(tools: ToolRegistry) -> None:
     """Register existing tools as capabilities in the registry."""
     registry = get_registry()
@@ -366,7 +374,7 @@ def _register_tool_capabilities(tools: ToolRegistry) -> None:
         except Exception as e:
             logger.debug("Failed to register tool %s as capability: %s", tool_name, e)
 
-
+#单个工具调用统一入口，包含超时保护、状态更新、异常兜底，防止单个工具崩溃卡死整个循环。
 def _execute_single_tool(
     call: dict,
     tools: ToolRegistry,
@@ -736,9 +744,9 @@ def _apply_control_signal(
 def run_agent_turn(
     *,
     model: ModelAdapter,
-    tools: ToolRegistry,
+    tools: ToolRegistry,##全局工具注册表
     messages: list[ChatMessage],
-    cwd: str,
+    cwd: str,##项目工作目录
     permissions: PermissionManager | None = None,
     session: Any | None = None,
     store: Store[AppState] | None = None,
@@ -759,6 +767,7 @@ def run_agent_turn(
     enable_work_chain: bool = True,
 ) -> list[ChatMessage]:
     # Prelude: prepare per-turn state before we enter the recurrent think/act loop.
+    ##状态初始化
     current_messages = list(messages)
     runtime = runtime or {}
     configured_runtime_model = (
@@ -766,6 +775,7 @@ def run_agent_turn(
         or str(runtime.get("model", "")).strip()
         or str(getattr(model, "model_id", "") or "").strip()
     )
+    print(f"🚰 [流入] 收到 {len(messages)} 条消息，第一条内容：{messages[0].get('content', '')[:30]}...")
     if configured_runtime_model:
         runtime.setdefault("configuredModel", configured_runtime_model)
     runtime_profile = resolve_runtime_profile(runtime, fallback_max_steps=max_steps)
@@ -834,7 +844,7 @@ def run_agent_turn(
     model_switcher: Any = None
     memory_injector: Any = None
 
-    if enable_work_chain:
+    if enable_work_chain:##构建任务，若成功-建TaskGraph，分配slot,start_task
         prelude.task, prelude.task_metadata = _build_work_chain_task(current_messages)
         if prelude.task:
             prelude.task_graph = TaskGraph(name=f"turn-{prelude.task.id}")
@@ -870,6 +880,7 @@ def run_agent_turn(
         model_switcher = orch.model_switcher
         logger.info("CyberneticOrchestrator: %d controllers initialized", 15)
         if smart_router and prelude.task:
+            ##根据任务文本 + 当前模型，route_and_switch 推荐更合适的模型，切换成功就替换 model 引用。
             try:
                 current_model_id = model.model_id if hasattr(model, 'model_id') else ""
                 task_text = prelude.task.raw_input if hasattr(prelude.task, 'raw_input') else str(current_messages[-1].get('content', ''))
@@ -1107,7 +1118,7 @@ def run_agent_turn(
         # 运行控制论闭环优化管线 (Sense → Predict → Control → Act → Learn)
         if context_cybernetics:
             if cost_control:
-                est_cost = stats.total_tokens * 0.000015
+                est_cost = float(stats.total_tokens) * 0.000015
                 adj = cost_control.run(
                     cost_usd=est_cost,
                     total_tokens=stats.total_tokens,
@@ -1185,6 +1196,7 @@ def run_agent_turn(
         # Recurrent kernel: repeated think/act/observe iterations over one turn.
         while turn_state.has_remaining_steps():
             step = turn_state.begin_step()
+            print(f"🔄 [循环] 第 {step} 圈开始，当前剧本总长度 {len(current_messages)} 条")
             previous_policy = turn_state.step_policy
             current_policy = derive_turn_step_policy(turn_state)
             policy_message = render_turn_policy_message(
@@ -2104,16 +2116,17 @@ def run_agent_turn(
                         {"type": "assistant", "steps": turn_state.step},
                     ]
                     reflection = reflection_engine.reflect(
-                        task_description=(
+                         task_description=(
                             prelude.task.raw_input
                             if hasattr(prelude.task, "raw_input")
                             else str(prelude.task.id)
                         ),
-                        execution_trace=execution_trace,
+                        execution_trace=_trace,##excution_trace报错
                     )
                     logger.info(
                         "AgentReflection: success=%s confidence=%.2f lessons=%d improvements=%d",
-                        reflection.success, reflection.confidence,
+                        reflection.success,
+                        float(reflection.confidence),
                         len(reflection.lessons_learned), len(reflection.suggested_improvements),
                     )
                 except Exception:

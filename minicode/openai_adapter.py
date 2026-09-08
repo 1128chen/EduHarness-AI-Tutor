@@ -17,7 +17,7 @@ from typing import Any, Callable, Literal
 from minicode.api_retry import RETRYABLE_STATUS, calculate_backoff
 from minicode.cost_tracker import calculate_cost
 from minicode.state import Store, AppState, add_cost, record_api_error, update_context_usage
-from minicode.types import AgentStep, StepDiagnostics
+from minicode.edu_types import AgentStep, StepDiagnostics
 
 DEFAULT_MAX_RETRIES = 4
 OPENAI_MODELS = {"gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-5.5", "gpt5.5", "o1", "o1-mini", "o3-mini"}

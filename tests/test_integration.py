@@ -28,7 +28,7 @@ from minicode.mock_model import MockModelAdapter
 from minicode.permissions import PermissionManager
 from minicode.tooling import ToolContext, ToolRegistry, ToolDefinition, ToolResult
 from minicode.tools import create_default_tool_registry
-from minicode.types import AgentStep, ChatMessage
+from minicode.edu_types import AgentStep, ChatMessage
 from minicode.context_manager import ContextManager
 from minicode.session import SessionData, save_session, load_session, list_sessions
 from minicode.config import load_effective_settings, MINI_CODE_DIR

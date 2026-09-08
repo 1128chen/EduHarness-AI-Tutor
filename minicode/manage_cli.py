@@ -25,7 +25,7 @@ def _parse_scope(args: list[str]) -> tuple[str, list[str]]:
     return "user", rest
 
 
-def _take_option(args: list[str], name: str) -> str | None:
+def _take_option(args: list[str], name: str) -> str | None:##提取单值选项
     if name not in args:
         return None
     index = args.index(name)

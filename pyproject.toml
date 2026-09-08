@@ -2,26 +2,27 @@
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[project]
-name = "minicode-py"
-version = "0.1.0"
-description = "A lightweight terminal coding assistant for local development workflows."
-readme = "README.md"
-requires-python = ">=3.11"
-dependencies = []
+#[project]
+#name = "minicode-py"
+#version = "0.1.0"
+#description = "A lightweight terminal coding assistant for local development workflows."
+#readme = "README.md"
+#requires-python = ">=3.11"
+#dependencies = []
 
-[project.optional-dependencies]
-dev = ["pytest>=8.0.0", "hypothesis>=6.0.0", "setuptools>=68"]
-
-[project.scripts]
-minicode-py = "minicode.main:main"
-minicode-headless = "minicode.headless:main"
-minicode-readiness = "minicode.readiness:main"
-minicode-structure-check = "minicode.structure_check:main"
+#[project.optional-dependencies]
+#dev = ["pytest>=8.0.0", "hypothesis>=6.0.0", "setuptools>=68"]
+#
+#[project.scripts]
+#minicode-py = "minicode.main:main"
+#minicode-headless = "minicode.headless:main"
+#minicode-readiness = "minicode.readiness:main"
+#minicode-structure-check = "minicode.structure_check:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+asyncio_mode="auto"
 
 [tool.setuptools]
 package-dir = {"" = "."}
@@ -38,3 +39,35 @@ warn_return_any = false
 warn_unused_configs = true
 ignore_missing_imports = true
 check_untyped_defs = false
+
+
+
+##新增：保留 MiniCode 的零依赖核心，把 Web 能力放入可选依赖，避免 CLI 用户被迫安装数据库和 FastAPI。
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "pytest-asyncio>=0.24.0",
+  "httpx>=0.27.0",
+  "hypothesis>=6.0.0",
+  "setuptools>=68",
+]
+web = [
+  "fastapi>=0.115.0,<1",
+  "uvicorn[standard]>=0.30.0,<1",
+  "sse-starlette>=2.1.0,<3",
+  "pydantic-settings>=2.5.0,<3",
+  "sqlalchemy[asyncio]>=2.0.35,<3",
+  "aiosqlite>=0.20.0,<1",
+  "asyncpg>=0.29.0,<1",
+  "alembic>=1.13.0,<2",
+  "mcp>=1.0.0,<2",
+]
+
+[project.scripts]
+minicode-py = "minicode.main:main"
+minicode-headless = "minicode.headless:main"
+minicode-readiness = "minicode.readiness:main"
+minicode-structure-check = "minicode.structure_check:main"
+eduharness-api = "eduharness.api.app:run"
+eduharness-question-bank = "eduharness.mcp_servers.question_bank:main"
+eduharness-knowledge-base = "eduharness.mcp_servers.knowledge_base:main"

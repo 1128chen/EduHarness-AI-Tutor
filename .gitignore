@@ -82,3 +82,26 @@ __pycache__/
 *.git.bak/
 .dead-modules-backup/
 .worktrees/
+
+# ---- Publish safety: data / DB / deps / nested checkouts (never commit) ----
+*.db
+*.sqlite3
+seed_lc_tmp.db
+data/
+node_modules/
+MiniCode-Python/
+.mini-code-memory/
+.mini-code-memory-local/
+.mini-code-session-memory/
+eduharness/.mini-code-memory/
+*.log
+.pytest_cache/
+
+# Root scratch scripts (keep out of the published repo)
+check_turn.py
+test.py
+body.json
+env.py
+
+# Local IDE/dev launcher (contains machine-specific absolute paths)
+.claude/launch.json

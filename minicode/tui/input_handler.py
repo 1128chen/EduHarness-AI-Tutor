@@ -13,7 +13,7 @@ from minicode.history import save_history_entries
 from minicode.local_tool_shortcuts import parse_local_tool_shortcut
 from minicode.prompt import build_system_prompt_bundle
 from minicode.tooling import ToolContext
-from minicode.types import RuntimeEvent
+from minicode.edu_types import RuntimeEvent
 from minicode.tui.session_flow import refresh_tty_session_snapshot
 from minicode.tui.tool_helpers import _summarize_tool_input, _is_file_edit_tool, _extract_path_from_tool_input, _summarize_collapsed_tool_body
 from minicode.tui.tool_lifecycle import _push_transcript_entry, _update_tool_entry, _update_transcript_entry, _append_to_transcript_entry, _collapse_tool_entry, _finalize_dangling_running_tools, _get_running_tool_entries, _schedule_tool_auto_collapse

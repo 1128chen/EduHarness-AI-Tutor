@@ -183,10 +183,10 @@ def calculate_cost(
     """
     pricing = MODEL_PRICING.get(model, MODEL_PRICING["default"])
     return (
-        (input_tokens / _DECIMAL_1M) * pricing["input"]
-        + (output_tokens / _DECIMAL_1M) * pricing["output"]
-        + (cache_read_tokens / _DECIMAL_1M) * pricing["cache_read"]
-        + (cache_creation_tokens / _DECIMAL_1M) * pricing["cache_write"]
+        float(input_tokens / _DECIMAL_1M) * pricing["input"]
+        + float(output_tokens / _DECIMAL_1M) * pricing["output"]
+        + float(cache_read_tokens / _DECIMAL_1M) * pricing["cache_read"]
+        + float(cache_creation_tokens / _DECIMAL_1M) * pricing["cache_write"]
     )
 
 

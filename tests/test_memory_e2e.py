@@ -30,7 +30,7 @@ from minicode.permissions import PermissionManager
 from minicode.tools import create_default_tool_registry
 from minicode.prompt import build_system_prompt
 from minicode.context_manager import ContextManager
-from minicode.types import AgentStep
+from minicode.edu_types import AgentStep
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,16 @@
+{
+  "total_cases": 7,
+  "passed_cases": 6,
+  "task_pass_rate": 0.8571428571428571,
+  "terminal_event_rate": 0.8571428571428571,
+  "tool_selection_rate": 1.0,
+  "forbidden_tool_safety_rate": 1.0,
+  "tool_started": 15,
+  "tool_completed": 15,
+  "tool_failed": 0,
+  "tool_completion_rate": 1.0,
+  "ttft_p50_seconds": 4.622,
+  "ttft_p95_seconds": 6.211,
+  "duration_p50_seconds": 10.812,
+  "duration_p95_seconds": 22.673
+}

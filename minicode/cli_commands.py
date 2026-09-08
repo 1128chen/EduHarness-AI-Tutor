@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+
+# 导入项目全局命令注册表（所有合法斜杠命令都在这里注册）
 from Main.MinicodeFrontline.Src.Application.Entry.LocalCommandSurface import (
     SLASH_COMMANDS,
 )
@@ -20,6 +22,7 @@ from minicode.product_surfaces import (
     resolve_extension_manifest,
     set_extension_enabled,
 )
+# 导入会话核心功能：回滚、检查点、会话列表、会话回放、会话加载
 from minicode.session import (
     format_rewind_preview,
     format_session_checkpoints,
@@ -41,7 +44,7 @@ def format_slash_commands() -> str:
         "║  📚 Available Commands                                  ║",
         "╠══════════════════════════════════════════════════════════╣",
     ]
-    
+    # 【核心设计】命令分组管理，分类展示，用户体验极强
     command_groups = {
         "🔧 Core Commands": [
             ("/help", "Show this help message"),
@@ -99,6 +102,7 @@ def format_slash_commands() -> str:
             ("/permissions", "Show permission storage path"),
             ("/config-paths", "Show settings file paths"),
         ],
+        "✨ 我的自定义功能":[("/author", "查看项目开发者信息")]
     }
     
     for group_name, commands in command_groups.items():
@@ -118,13 +122,14 @@ def format_slash_commands() -> str:
     
     return "\n".join(lines)
 
-
+# 模糊匹配命令：用户输缩写也能匹配到正确命令
 def find_matching_slash_commands(user_input: str) -> list[str]:
     """Find slash commands matching user input.
 
     Tries exact prefix first, falls back to fuzzy subsequence matching.
     """
     commands = [c.usage for c in SLASH_COMMANDS]
+    # 优先精准前缀匹配（用户输/mem，优先匹配/memory开头）
     prefix_matches = [c for c in commands if c.startswith(user_input)]
     if prefix_matches:
         return prefix_matches
@@ -135,28 +140,33 @@ def find_matching_slash_commands(user_input: str) -> list[str]:
 
 
 def complete_slash_command(line: str) -> tuple[list[str], str]:
+    # 获取所有注册命令
     commands = [c.usage for c in SLASH_COMMANDS]
+    # 前缀精准匹配
     hits = [c for c in commands if c.startswith(line)]
     if not hits and line:
         lower = line.lower()
         hits = [c for c in commands if all(ch in c.lower() for ch in lower)]
     return (hits if hits else commands, line)
 
-
+# 统一命令处理入口：所有终端命令都会进入这里分发
 def try_handle_local_command(
     user_input: str,
     tools=None,
     cwd: str | None = None,
     session=None,
 ) -> str | None:
+    # ========== 内部工具函数：生成项目全局快照（系统状态数据） ==========
     def _product_snapshot() -> dict:
         if session is not None:
+            # 读取会话各类状态数据，容错取值，为空不报错
             instruction_layers = list(getattr(session, "instruction_layers", []) or [])
             hook_status = dict(getattr(session, "hook_status", {}) or {})
             delegated_tasks = list(getattr(session, "delegated_tasks", []) or [])
             delegation_status = dict(getattr(session, "delegation_status", {}) or {})
             extension_manifests = list(getattr(session, "extension_manifests", []) or [])
             readiness_report = dict(getattr(session, "readiness_report", {}) or {})
+            # 只要有任意一项状态数据，就组装结构化快照
             if any(
                 [
                     instruction_layers,
@@ -184,7 +194,7 @@ def try_handle_local_command(
         if cwd is None:
             return {}
         return build_product_snapshot(cwd)
-
+    #========== 格式化：指令层状态展示 ==========
     def _format_instruction_surface(snapshot: dict) -> str:
         layers = list(snapshot.get("instruction_layers", []) or [])
         lines = [
@@ -194,6 +204,7 @@ def try_handle_local_command(
         if not layers:
             lines.append("No instruction layers discovered for this workspace.")
             return "\n".join(lines)
+        # 遍历展示所有指令层详情
         lines.append("")
         lines.append(f"Layers ({len(layers)}):")
         for layer in layers:
@@ -219,6 +230,7 @@ def try_handle_local_command(
         if not status:
             lines.append("No hook telemetry is available.")
             return "\n".join(lines)
+        # 展示钩子统计数据：启用数量、调用次数、耗时、失败数
         lines.extend(
             [
                 "",
@@ -248,6 +260,7 @@ def try_handle_local_command(
         if not status and not tasks:
             lines.append("No delegation state is available.")
             return "\n".join(lines)
+        # 展示任务运行槽位、活跃标签、运行数量
         if status:
             lines.extend(
                 [
@@ -269,6 +282,7 @@ def try_handle_local_command(
                 lines.append(f"- {label} [{task_status}]")
         return "\n".join(lines)
 
+    # ========== 格式化：插件/扩展状态展示 ==========
     def _format_extension_surface(snapshot: dict) -> str:
         manifests = list(snapshot.get("extension_manifests", []) or [])
         lines = [
@@ -297,6 +311,7 @@ def try_handle_local_command(
                 lines.append(f"  entrypoint: {entrypoint}")
         return "\n".join(lines)
 
+    # ========== 格式化：项目就绪检测报告（readiness核心展示）
     def _format_readiness_surface(snapshot: dict) -> str:
         report = dict(snapshot.get("readiness_report", {}) or {})
         lines = [
@@ -338,6 +353,7 @@ def try_handle_local_command(
             for candidate in fallback_candidates:
                 label = "ready" if candidate in viable_fallbacks else "not-ready"
                 lines.append(f"- {candidate} [{label}]")
+        #问题、修复指引、预检项、修复计划全部格式化展示
         issues = [str(issue) for issue in list(report.get("issues", []) or []) if str(issue).strip()]
         if issues:
             lines.append("Issues:")
@@ -410,6 +426,7 @@ def try_handle_local_command(
                 lines.append(f"- {label}{location}: {rendered_settings}")
         return "\n".join(lines)
 
+    #========== 格式化：单个插件详情查看 ==========
     def _format_extension_manifest_detail(identifier: str) -> str:
         if cwd is None:
             return "No workspace is available for extension inspection."
@@ -443,6 +460,7 @@ def try_handle_local_command(
             lines.extend(f"- {key}" for key in extra_keys)
         return "\n".join(lines)
 
+    # ========== 插件启用/禁用状态修改 ==========
     def _set_extension_state(identifier: str, enabled: bool) -> str:
         if cwd is None:
             return "No workspace is available for extension changes."
@@ -466,7 +484,7 @@ def try_handle_local_command(
             f"Restored: {restored_preview}\n\n"
             f"{format_session_resume(target_session)}"
         )
-
+    # ========== 会话加载工具：获取最新/指定会话 ==========
     def _workspace_session(target: str):
         workspace = str(Path(cwd).resolve()) if cwd else None
         return (
@@ -487,7 +505,7 @@ def try_handle_local_command(
                 f"compat fallback: {CLAUDE_SETTINGS_PATH}",
             ]
         )
-
+    #权限
     if user_input == "/permissions":
         return f"permission store: {MINI_CODE_PERMISSIONS_PATH}"
 
@@ -515,13 +533,13 @@ def try_handle_local_command(
         if not identifier:
             return "Usage: /extension-inspect <name>"
         return _format_extension_manifest_detail(identifier)
-
+    ##启用插件
     if user_input.startswith("/extension-enable "):
         identifier = user_input[len("/extension-enable ") :].strip()
         if not identifier:
             return "Usage: /extension-enable <name>"
         return _set_extension_state(identifier, True)
-
+    ##禁用插件
     if user_input.startswith("/extension-disable "):
         identifier = user_input[len("/extension-disable ") :].strip()
         if not identifier:
@@ -679,7 +697,7 @@ def try_handle_local_command(
             steps=steps,
             checkpoint_id=checkpoint_id,
         )
-
+    ##查看技能文件
     if user_input == "/skills":
         skills = tools.get_skills() if tools else []
         if not skills:
@@ -688,7 +706,7 @@ def try_handle_local_command(
             f"{skill['name']}  {skill['description']}  [{skill['source']}]"
             for skill in skills
         )
-
+    ##配置诊断
     if user_input == "/config":
         from minicode.config import format_config_diagnostic
         return format_config_diagnostic()
@@ -767,7 +785,7 @@ def try_handle_local_command(
                 runtime["sourceSummary"],
             ]
         )
-
+    ##模型查看/切换
     if user_input == "/model":
         try:
             runtime = load_runtime_config()
@@ -805,6 +823,9 @@ def try_handle_local_command(
         from minicode.user_profile import handle_user_command
         args = user_input[len("/user"):].strip()
         return handle_user_command(args)
+    # 自定义测试命令：验证分发调度机制
+    if user_input == "/test-dispatch":
+        return "✅ 命令分发调度生效，自定义功能正常运行！\n✅ 二次开发命令注册成功！"
 
     return None
 

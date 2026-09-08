@@ -539,7 +539,7 @@ class TestAgentLoopIntegration:
     def test_metrics_collector_integration(self):
         """Metrics flow through agent loop."""
         from minicode.agent_loop import run_agent_turn
-        from minicode.types import AgentStep
+        from minicode.edu_types import AgentStep
 
         metrics = AgentMetricsCollector()
 
@@ -570,7 +570,7 @@ class TestAgentLoopIntegration:
     def test_error_recovery_integration(self):
         """Error classification in loop."""
         from minicode.agent_loop import run_agent_turn
-        from minicode.types import AgentStep, ToolCall
+        from minicode.edu_types import AgentStep, ToolCall
         from minicode.tooling import ToolResult
 
         # Tool that always fails with a network error
@@ -619,7 +619,7 @@ class TestAgentLoopIntegration:
     def test_scheduler_integration(self):
         """Tool scheduling in loop."""
         from minicode.agent_loop import run_agent_turn
-        from minicode.types import AgentStep, ToolCall
+        from minicode.edu_types import AgentStep, ToolCall
         from minicode.tooling import ToolResult
 
         results_log: list[str] = []

@@ -59,9 +59,10 @@ KNOWN_MODELS = [
     "deepseek/deepseek-chat",
     "qwen/qwen3-235b-a22b",
     "minimax/minimax-m1",
+    "deepseek/deepseek-v4-pro"
 ]
 
-
+##
 def _coerce_model_list(value: Any) -> list[str]:
     if isinstance(value, str):
         items = value.split(",")
@@ -505,7 +506,7 @@ def save_mini_code_settings(updates: dict[str, Any]) -> None:
         encoding="utf-8",
     )
 
-
+##核心
 def load_runtime_config(
     cwd: str | Path | None = None,
     *,
@@ -533,13 +534,13 @@ def load_runtime_config(
 
     def runtime_setting(name: str, *, prefer_settings_env: bool = False) -> str:
         if prefer_settings_env:
-            value = settings_env.get(name)
+            value = settings_env.get(name)##设置env优先
             if value not in (None, ""):
                 return str(value).strip()
-        value = os.environ.get(name)
+        value = os.environ.get(name)##进程环境变量
         if value not in (None, ""):
             return str(value).strip()
-        value = settings_env.get(name)
+        value = settings_env.get(name)##设置env兜底
         if value not in (None, ""):
             return str(value).strip()
         return ""
@@ -650,7 +651,7 @@ def load_runtime_config(
         os.environ.get("CUSTOM_MODEL_FALLBACKS", "")
         or effective.get("customFallbackModels", [])
     )
-
+    ##返回runtime dict全字段
     return {
         "model": model,
         "configuredModel": model,
@@ -681,8 +682,10 @@ def load_runtime_config(
         "openrouterApiKey": openrouter_api_key,
         "customBaseUrl": custom_base_url,
         "customApiKey": custom_api_key,
+        ##能力
         "maxOutputTokens": max_output_tokens,
         "mcpServers": effective.get("mcpServers", {}),
+        ##路径，4 条 User/Managed profile 路径 + 2 条 extensions 目录（全局/项目
         "globalUserProfilePath": str(global_user_profile),
         "projectUserProfilePath": str(proj_user_profile),
         "globalManagedPolicyPath": str(global_managed_policy),
@@ -731,13 +734,13 @@ def validate_provider_runtime(
     from minicode.model_registry import Provider, detect_provider
 
     model = str(runtime.get("model", "")).strip()
-    provider = detect_provider(
+    provider = detect_provider(##先判断走哪个provider优先级 OpenRouter → OpenAI → Custom → Anthropic
         model,
         runtime,
         probe_openai_models=probe_openai_models,
     )
     errors: list[str] = []
-
+        ##校验对应provider的key和baseurl
     if provider == Provider.OPENAI:
         if not runtime.get("openaiApiKey"):
             errors.append(

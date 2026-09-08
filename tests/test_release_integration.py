@@ -19,7 +19,7 @@ from minicode.tui.event_flow import _handle_event
 from minicode.tui.input_handler import _handle_input
 from minicode.tui.input_parser import KeyEvent
 from minicode.tui.state import ScreenState, TtyAppArgs
-from minicode.types import AgentStep
+from minicode.edu_types import AgentStep
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

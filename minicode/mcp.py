@@ -33,7 +33,7 @@ _WIN_EXEC_EXTS = (".exe", ".cmd", ".bat")
 
 JsonRpcProtocol = str
 
-
+##描述MCP服务器的当前状态
 @dataclass(slots=True)
 class McpServerSummary:
     name: str
@@ -45,13 +45,13 @@ class McpServerSummary:
     resourceCount: int | None = None
     promptCount: int | None = None
 
-
+##工具名清洗，将任意的服务器名/工具名变成“安全的标识符”
 def _sanitize_tool_segment(value: str) -> str:
     normalized = "".join(char.lower() if char.isalnum() or char in {"_", "-"} else "_" for char in value)
     normalized = normalized.strip("_")
     return normalized or "tool"
 
-
+##命令安全检验
 def _validate_mcp_command(command: str) -> None:
     """验证 MCP 命令的合法性"""
     from pathlib import Path
@@ -130,7 +130,7 @@ def _validate_mcp_args(args: list[str]) -> None:
                     f"MCP server arguments cannot contain shell metacharacters for security reasons."
                 )
 
-
+##准备进程启动方式
 def _prepare_spawn(command: str, args: list[str]) -> tuple[list[str] | str, dict]:
     """Resolve MCP command into a form subprocess can execute.
 
@@ -249,7 +249,7 @@ class StdioMcpClient:
         self.process: subprocess.Popen[bytes] | None = None
         self.protocol: JsonRpcProtocol | None = None
         self.next_id = 1
-        self._pending: dict[int, Queue[Any]] = {}
+        self._pending: dict[int, Queue[Any]] = {}##待响应列表：{请求id-响应队列}
         self._lock = threading.Lock()
         self.stderr_lines: list[str] = []
         self._stderr_thread: threading.Thread | None = None
@@ -283,7 +283,7 @@ class StdioMcpClient:
         If already started, returns immediately.
         If previously failed, retries the connection.
         """
-        if self._started:
+        if self._started:##幂等：已经启动了就直接返回
             return
         
         if self._start_error is not None and self.process is None:
@@ -293,7 +293,7 @@ class StdioMcpClient:
         last_error: Exception | None = None
         for protocol in self._protocol_candidates():
             try:
-                self._spawn_process()
+                self._spawn_process()##启动子进程
                 self.protocol = protocol
                 self.request(
                     "initialize",
@@ -302,7 +302,7 @@ class StdioMcpClient:
                         "capabilities": {},
                         "clientInfo": {"name": "mini-code", "version": "0.1.0"},
                     },
-                    timeout_seconds=2.0,
+                    timeout_seconds=15.0,
                 )
                 self.notify("notifications/initialized", {})
                 self._started = True
@@ -622,7 +622,7 @@ class StdioMcpClient:
         self._resources_cache = None
         self._prompts_cache = None
 
-
+##把配置里所有 MCP 服务器，统一包装成 MiniCode 的 tools 列表返回。
 def create_mcp_backed_tools(*, cwd: str, mcp_servers: dict[str, dict[str, Any]]) -> dict[str, Any]:
     """Create MCP-backed tools with lazy server initialization.
     
@@ -646,7 +646,7 @@ def create_mcp_backed_tools(*, cwd: str, mcp_servers: dict[str, dict[str, Any]])
         if config.get("enabled") is False:
             servers.append(asdict(McpServerSummary(name=server_name, command=config.get("command", ""), status="disabled", toolCount=0, protocol=config.get("protocol"))))
             continue
-
+        ##此刻还未启动进程，这是“懒启动”
         client = StdioMcpClient(server_name, config, cwd)
         clients.append(client)
         
@@ -674,7 +674,7 @@ def create_mcp_backed_tools(*, cwd: str, mcp_servers: dict[str, dict[str, Any]])
         # For simplicity, we still try to discover tools at creation
         # time but don't fail if the server can't start yet.
         try:
-            descriptors = client.list_tools()
+            descriptors = client.list_tools()  ##会触发真正的启动+握手
             try:
                 resources = client.list_resources()
             except Exception:  # noqa: BLE001

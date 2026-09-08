@@ -16,7 +16,7 @@ from typing import TypedDict, cast
 
 from minicode.agent_loop import run_agent_turn
 from minicode.tooling import ToolDefinition, ToolResult
-from minicode.types import ChatMessage
+from minicode.edu_types import ChatMessage
 
 
 # ---------------------------------------------------------------------------
